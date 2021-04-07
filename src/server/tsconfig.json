@@ -22,7 +22,10 @@
       "dom.iterable",
       "scripthost"
     ],
-    "outDir": "../../dist/server/"
+    "outDir": "../../dist/server/",
+    // required for typeorm
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
   },
   "include": [
     "**/*.ts",

@@ -62,6 +62,7 @@ function onListening() {
       typeof address === "string" ? "pipe " + address : "port " + address.port;
 
     const networkInterfaces = os.networkInterfaces();
+
     for (const arrays of Object.values(networkInterfaces)) {
       if (!Array.isArray(arrays)) {
         continue;

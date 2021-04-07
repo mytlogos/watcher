@@ -5,9 +5,23 @@ import logger from "morgan";
 import compression from "compression";
 // helps by preventing some known http vulnerabilities by setting http headers appropriately
 import helmet from "helmet";
+import { createConnection } from "typeorm";
+import apiRouter from "./routes/api";
+
 export const app = express();
 
 const parentDirName = path.dirname(path.dirname(__dirname));
+
+let started = false;
+
+app.use(async (_req, _res, next) => {
+  if (!started) {
+    started = true;
+    await createConnection();
+  }
+  console.log("Incoming request: " + _req.method + " " + _req.url);
+  next();
+});
 
 app.use(
   logger(":method :url :status :response-time ms - :res[content-length]", {
@@ -25,10 +39,10 @@ app.use(compression());
 // only accept json as req body
 app.use(express.json());
 
-// app.use("/api", apiRouter());
+app.use("/api", apiRouter);
 
 // map root to app.html first, before the static files, else it will map to index.html by default
-app.get("/", (req, res) =>
+app.get("/", (_req, res) =>
   res.sendFile(
     path.join(parentDirName, path.join("dist", "website", "app.html"))
   )
@@ -45,12 +59,14 @@ app.use((req, res) => {
 });
 
 // catch 404 and forward to error handler
-app.use((req, res, next) => {
+app.all("*", (req, res, next) => {
+  console.log("i am a fallback handler");
   next(createError(404));
 });
 
 // error handler
 app.use((err: HttpError, req: Request, res: Response) => {
+  console.log("i am a error handler");
   // set locals, only providing error in development
   res.locals.message = err.message;
   res.locals.error = req.app.get("env") === "development" ? err : {};
