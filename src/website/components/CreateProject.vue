@@ -33,6 +33,7 @@
           class="form-control"
           id="path-input"
           placeholder="Write a Path"
+          :disabled="isGlobal"
         />
       </div>
       <div class="mb-3">
@@ -72,7 +73,7 @@ export default defineComponent({
     async submit() {
       const result = await projectApi.check(
         {
-          path: this.path,
+          path: this.isGlobal ? "" : this.path,
           type: this.type,
           name: this.name,
           isGlobal: this.isGlobal,
