@@ -26,7 +26,7 @@
       Outdated
     </span>
     <div class="d-inline-block">
-      <button class="btn btn-info m-1" type="button" @click="check">
+      <button class="btn btn-info m-1" type="button" @click.stop="check">
         Recheck
       </button>
       <button class="btn btn-danger m-1 disabled" type="button">Delete</button>
