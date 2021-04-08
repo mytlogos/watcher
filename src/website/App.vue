@@ -57,3 +57,10 @@ export default defineComponent({
   },
 });
 </script>
+<style>
+@media (min-width: 700px) {
+  .container.list {
+    max-width: 700px;
+  }
+}
+</style>

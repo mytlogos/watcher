@@ -1,11 +1,18 @@
 import { createRouter, createWebHistory, RouteRecordRaw } from "vue-router";
 import ProjectList from "../views/ProjectList.vue";
+import Project from "../views/Project.vue";
 
 const routes: Array<RouteRecordRaw> = [
   {
     path: "/",
     name: "Home",
     component: ProjectList,
+  },
+  {
+    path: "/project/:id",
+    name: "Project",
+    props: (route) => ({ projectId: Number(route.params.id) }),
+    component: Project,
   },
   {
     path: "/about",

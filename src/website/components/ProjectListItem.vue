@@ -7,7 +7,7 @@
     }}</span>
   </div>
   <div class="d-flex w-100 justify-content-between">
-    <span class="my-auto">{{ item.path }}</span>
+    <span class="my-auto">Location: {{ pathDisplay }}</span>
     <span class="my-auto" v-if="loading">Checking...</span>
   </div>
   <div class="d-flex w-100 justify-content-between">
@@ -21,8 +21,10 @@
         'bg-danger': outdatedDependencyCount > 0,
       }"
       style="max-height: 2em"
-      >{{ outdatedDependencyCount }} Outdated</span
     >
+      {{ outdatedDependencies }}
+      Outdated
+    </span>
     <div class="d-inline-block">
       <button class="btn btn-info m-1" type="button" @click="check">
         Recheck
@@ -48,21 +50,32 @@ export default defineComponent({
     };
   },
   computed: {
+    pathDisplay(): string {
+      if (this.item.isGlobal) {
+        return "Global";
+      }
+      return this.item?.path || "";
+    },
     dependencyCount(): string {
       if (!this.item.meta) {
         return "Unknown";
       }
       return this.item.meta.dependencies?.length + "";
     },
-    outdatedDependencyCount(): string {
-      if (!this.item.meta) {
-        return "Unknown";
+    outdatedDependencyCount(): number {
+      if (!this.item.meta || !this.item.meta.dependencies) {
+        return -1;
       }
-      return (
-        this.item.meta.dependencies?.filter(
-          (dep) => dep.availableVersions && dep.availableVersions.length > 3
-        ).length + ""
-      );
+      return this.item.meta.dependencies?.filter(
+        (dep) => dep.availableVersions && dep.availableVersions.length > 3
+      ).length;
+    },
+    outdatedDependencies(): string | number {
+      if (this.outdatedDependencyCount < 0) {
+        return "Unknown";
+      } else {
+        return this.outdatedDependencyCount;
+      }
     },
   },
   methods: {

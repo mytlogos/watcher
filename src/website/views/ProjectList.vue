@@ -9,6 +9,7 @@
             v-for="(item, index) in items"
             :key="item && item.id"
             role="button"
+            @click="navigateTo(item.id)"
           >
             <project-list-item v-model:item="items[index]" />
           </li>
@@ -33,6 +34,14 @@ export default defineComponent({
     this.fetch().catch(console.error);
   },
   methods: {
+    navigateTo(id: number): void {
+      this.$router.push({
+        name: "Project",
+        params: {
+          id,
+        },
+      });
+    },
     async fetch() {
       const items = await projectApi.getAll();
       this.$store.commit("setProjects", items);
@@ -40,10 +49,3 @@ export default defineComponent({
   },
 });
 </script>
-<style>
-@media (min-width: 700px) {
-  .container.list {
-    max-width: 700px;
-  }
-}
-</style>
