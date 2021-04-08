@@ -105,7 +105,7 @@ function createRest<T extends Entity>(
   formatOptions?: FormatOptions<T>
 ): RestAPI<T> {
   function rehydrate(value: T, options = formatOptions): T {
-    if (!options) {
+    if (!options || !value) {
       return value;
     }
     for (const [key, formatter] of Object.entries(options)) {
