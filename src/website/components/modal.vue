@@ -17,6 +17,9 @@
           <slot name="body" />
         </div>
         <div class="modal-footer">
+          <div v-if="errorMessage" class="flex-fill text-danger">
+            {{ errorMessage }}
+          </div>
           <slot name="footer" :close="() => close" :submit="() => submit">
             <button
               type="button"
@@ -75,6 +78,7 @@ export default defineComponent({
   methods: {
     close(hide = true): void {
       this.showing = false;
+      this.errorMessage = "";
       this.$emit("close");
 
       if (this.onClose) {
