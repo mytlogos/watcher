@@ -7,6 +7,31 @@ enum Method {
   DELETE = "DELETE",
 }
 
+function templateString(
+  path: string,
+  values: Record<string, any>,
+  removeMatched = false
+) {
+  const regex = /:\w+/;
+  const variables = regex.exec(path);
+
+  variables?.forEach((v) => {
+    const varName = v.slice(1);
+
+    if (varName in values) {
+      const value = values[varName];
+      path = path.replaceAll(v, value);
+
+      if (removeMatched) {
+        delete values[varName];
+      }
+    } else {
+      console.warn("Variable in Path has no value: " + v);
+    }
+  });
+  return path;
+}
+
 async function queryServer<V extends Record<string, any>, R>(
   { path, method }: { path: string; method: Method },
   query?: V
@@ -18,6 +43,13 @@ async function queryServer<V extends Record<string, any>, R>(
     },
     body: undefined as undefined | string,
   };
+  if (query) {
+    if (method === Method.GET) {
+      path = templateString(path, query, true);
+    } else {
+      path = templateString(path, query);
+    }
+  }
   const url = new URL(`${window.location.origin}/api/${path}`);
 
   if (query) {
@@ -145,10 +177,10 @@ export const projectApi = {
       },
     },
   }),
-  check(
-    project: Create<Project>,
+  check<T extends Project | Create<Project>>(
+    project: T,
     validityOnly?: boolean
-  ): Promise<Create<Project>> {
+  ): Promise<T> {
     return queryServer(
       {
         path: `project/check?check=${validityOnly ? "valid" : "full"}`,
