@@ -95,21 +95,27 @@ export default defineComponent({
       this.nameTyped = false;
     },
     getModal(): typeof modal {
-      return (this.$refs.modal as any) as typeof modal;
+      return (this.$refs.modal as unknown) as typeof modal;
     },
     async submit() {
-      const result = await projectApi.check(
-        {
-          path: this.isGlobal ? "" : this.path,
-          type: this.type,
-          name: this.name,
-          isGlobal: this.isGlobal,
-          meta: undefined,
-        },
-        true
-      );
-      const project = await projectApi.create(result);
-      this.$store.commit("addProject", project);
+      try {
+        const result = await projectApi.check(
+          {
+            path: this.isGlobal ? "" : this.path,
+            type: this.type,
+            name: this.name,
+            isGlobal: this.isGlobal,
+            meta: undefined,
+          },
+          true
+        );
+        const project = await projectApi.create(result);
+        this.$store.commit("addProject", project);
+      } catch (error) {
+        console.error(error);
+        this.getModal().showError(error.message);
+        return false;
+      }
       return true;
     },
     show() {
