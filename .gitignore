@@ -27,3 +27,6 @@ pnpm-debug.log*
 
 # sqlite
 *.db
+
+# test scripts
+test.js
