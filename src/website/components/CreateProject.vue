@@ -87,6 +87,13 @@ export default defineComponent({
     },
   },
   methods: {
+    reset() {
+      this.isGlobal = false;
+      this.type = "pip";
+      this.name = "";
+      this.path = "";
+      this.nameTyped = false;
+    },
     getModal(): typeof modal {
       return (this.$refs.modal as any) as typeof modal;
     },
@@ -108,7 +115,7 @@ export default defineComponent({
     show() {
       this.getModal().show({
         onSubmit: () => this.submit(),
-        onClose: () => console.log("closing"),
+        onClose: () => this.reset(),
       });
     },
   },
