@@ -1,4 +1,5 @@
 import { spawn } from "child_process";
+import { join } from "path";
 import { Dependency, Project, ProjectMeta } from "../entity/project";
 import { available, CheckOptions, Watcher } from "./watcher";
 
@@ -24,8 +25,8 @@ export class PythonWatcher extends Watcher {
       throw Error("Unsupported Path: " + project.path);
     }
 
-    if (!project.isGlobal && !(await available(project.path))) {
-      throw new Error("Path is not available");
+    if (!(await this.checkPathValidity(project))) {
+      throw new Error("Invalid Project Path");
     }
 
     if (!checkOptions?.validityOnly) {
@@ -37,6 +38,12 @@ export class PythonWatcher extends Watcher {
       project.meta.lastRun = new Date();
     }
     return project;
+  }
+
+  private async checkPathValidity(project: Project): Promise<boolean> {
+    const pipCommand = this.getPip(project);
+    const [_out, _err, exitCode] = await this.run(project, pipCommand);
+    return exitCode === 0;
   }
 
   public async loadDependencies(project: Project): Promise<Dependency[]> {
@@ -77,12 +84,21 @@ export class PythonWatcher extends Watcher {
     return [...nameMap.values()];
   }
 
+  private getPip(project: Project): string {
+    if (project.isGlobal) {
+      return "pip3";
+    } else {
+      return join(project.path, ".venv", "bin", "pip");
+    }
+  }
+
   private async listAllDependencies(
     project: Project
   ): Promise<PipDependency[]> {
+    const pipCommand = this.getPip(project);
     const [output, error] = await this.run(
       project,
-      "pip3",
+      pipCommand,
       "list",
       "--format",
       "json"
@@ -96,9 +112,11 @@ export class PythonWatcher extends Watcher {
   private async listOutdatedDependencies(
     project: Project
   ): Promise<PipOutdatedDependency[]> {
+    const pipCommand = this.getPip(project);
+
     const [output, error] = await this.run(
       project,
-      "pip3",
+      pipCommand,
       "list",
       "--outdated",
       "--format",
