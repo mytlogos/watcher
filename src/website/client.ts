@@ -32,6 +32,15 @@ function templateString(
   return path;
 }
 
+class HttpError extends Error {
+  code: number;
+
+  constructor(message: string, code: number) {
+    super(message);
+    this.code = code;
+  }
+}
+
 async function queryServer<V extends Record<string, any>, R>(
   { path, method }: { path: string; method: Method },
   query?: V
@@ -68,6 +77,11 @@ async function queryServer<V extends Record<string, any>, R>(
     }
   }
   const response = await fetch(url.toString(), init);
+
+  if (!response.ok) {
+    throw new HttpError(response.statusText, response.status);
+  }
+
   const result = await response.json();
 
   if (result.error) {
