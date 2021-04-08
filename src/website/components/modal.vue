@@ -63,34 +63,26 @@ export default defineComponent({
     };
   },
   mounted(): void {
-    console.log(this.$refs.modal);
+    const modalElement = this.$refs.modal as HTMLElement;
     // dont observe bootstrap things, it's not a data model
-    this.modal = markRaw(new Modal(this.$refs.modal as HTMLElement));
-    document.addEventListener(
-      "click",
-      (evt) => {
-        if (
-          !(this.$refs.modal as HTMLElement).contains(
-            evt.target as Node | null
-          ) &&
-          this.showing
-        ) {
-          evt.stopImmediatePropagation();
-          evt.preventDefault();
-          this.close();
-        }
-      },
-      { capture: true }
+    this.modal = markRaw(new Modal(modalElement));
+    // make sure the events etc are fired
+    modalElement.addEventListener(
+      "hidden.bs.modal",
+      () => this.showing && this.close(false)
     );
   },
   methods: {
-    close(): void {
+    close(hide = true): void {
+      this.showing = false;
       this.$emit("close");
 
       if (this.onClose) {
         this.onClose();
       }
-      this.modal?.hide();
+      if (hide) {
+        this.modal?.hide();
+      }
     },
     submit() {
       this.$emit("submit");
@@ -110,6 +102,7 @@ export default defineComponent({
     show({ onClose, onSubmit }: Show): void {
       this.onSubmit = onSubmit;
       this.onClose = onClose;
+      this.showing = true;
       this.modal?.show();
     },
     showError(message: string): void {
