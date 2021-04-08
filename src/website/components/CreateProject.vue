@@ -44,6 +44,7 @@
           class="form-control"
           id="name-input"
           placeholder="Name of the Project"
+          @input="nameTyped = true"
         />
       </div>
     </template>
@@ -63,8 +64,27 @@ export default defineComponent({
       type: "pip",
       name: "",
       path: "",
+      nameTyped: false,
       isGlobal: false,
     };
+  },
+  watch: {
+    path() {
+      if ((!this.name || !this.nameTyped) && !this.isGlobal) {
+        const filename = this.path.split(/[\\/]/).pop();
+        this.name = filename || "";
+      }
+    },
+    isGlobal() {
+      if ((!this.name || !this.nameTyped) && this.isGlobal) {
+        this.name = "Global - " + this.type;
+      }
+    },
+    type() {
+      if ((!this.name || !this.nameTyped) && this.isGlobal) {
+        this.name = "Global - " + this.type;
+      }
+    },
   },
   methods: {
     getModal(): typeof modal {
