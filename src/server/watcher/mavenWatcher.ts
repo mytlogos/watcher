@@ -16,12 +16,11 @@ interface MavenDependency extends MavenProject {
   depType?: string;
 }
 
-interface NpmOutdatedDependency {
+interface MavenOutdatedDependency {
   current: string;
-  wanted: string;
   latest: string;
-  dependent: string;
-  location: string;
+  group: string;
+  name: string;
 }
 
 type DependecyIndices<V = MavenDependency> = {
@@ -69,13 +68,27 @@ function buildTree(graph: MavenDependency[]): MavenProject {
       }
     }
   }
+  const removed = [] as MavenDependency[];
   // remove any dependants which are dependencies
   for (let outer = 0; outer < graph.length; outer++) {
     const item = graph[outer];
 
     let isDependency = false;
 
+    // check current graph
     for (const dependant of graph) {
+      const dependencyIndex = dependant.dependencies.findIndex((other) =>
+        equals(item, other, "name", "group", "version", "os")
+      );
+
+      if (dependencyIndex >= 0) {
+        isDependency = true;
+        dependant.dependencies[dependencyIndex] = item;
+      }
+    }
+
+    // check removed graph nodes
+    for (const dependant of removed) {
       const dependencyIndex = dependant.dependencies.findIndex((other) =>
         equals(item, other, "name", "group", "version", "os")
       );
@@ -88,7 +101,7 @@ function buildTree(graph: MavenDependency[]): MavenProject {
 
     if (isDependency) {
       // remove item and decrement the index afterwards
-      graph.splice(outer--, 1);
+      removed.push(...graph.splice(outer--, 1));
     }
   }
 
@@ -120,7 +133,7 @@ function parseDependencyTree(value: string): MavenProject[] {
   if (!startResult) {
     throw Error("Could not find dependency tree start");
   }
-  const depReg = /"([^:\s]+):([^:\s]+):([^:\s]+):([^:\s]:)*(\d+(\.\d)*)(:([^:\s]+))?" -> "([^:\s]+):([^:\s]+):([^:\s]+):([^:\s]:)*(\d+(\.\d)*):([^:\s]+)"\s*;\s+/g;
+  const depReg = /"([^:\s]+):([^:\s]+):([^:\s]+):([^:\s]+:)*(\d+(\.[^:\s]+)*)(:([^:\s]+))?" -> "([^:\s]+):([^:\s]+):([^:\s]+):([^:\s]+:)*(\d+(\.[^:\s.]+)*):([^:\s]+)"\s*;\s+/g;
 
   const projects = [];
 
@@ -175,11 +188,40 @@ function parseDependencyTree(value: string): MavenProject[] {
   return projects;
 }
 
+function parseOutdatedDependencies(value: string): MavenOutdatedDependency[] {
+  // remove ansi-color codes
+  // eslint-disable-next-line no-control-regex
+  value = value.replace(/\u001b[^m]*?m/g, "");
+  // remove any log levels like: '[INFO]' at the start of a line
+  value = value.replace(/\n\[.+?\]\s*/g, "\n");
+
+  const depReg = /([^:\s]+):([^:\s]+)[\s.]+(\S+(\.\S)*)\s*->\s*(\S+(\.\S)*)\s+/g;
+
+  let result = depReg.exec(value);
+  const dependencies = [];
+
+  while (result) {
+    const dependency = {
+      group: result[1],
+      name: result[2],
+      current: result[3],
+      latest: result[5],
+    } as MavenOutdatedDependency;
+
+    dependencies.push(dependency);
+    result = depReg.exec(value);
+  }
+  return dependencies;
+}
+
 export class MavenWatcher extends Watcher {
   public async check(
     project: Project,
     checkOptions?: CheckOptions
   ): Promise<Project> {
+    if (project.isGlobal) {
+      throw Error("Global Maven Projects are currently not allowed");
+    }
     // currently only local projects
     if ((!project.path && !project.isGlobal) || project.path.includes("://")) {
       throw Error("Unsupported Path: " + project.path);
@@ -201,12 +243,8 @@ export class MavenWatcher extends Watcher {
   }
 
   private async checkPathValidity(project: Project): Promise<boolean> {
-    const [_out, _err, exitCode] = await this.run(project, "npm");
-    return (
-      exitCode === 1 &&
-      (project.isGlobal ||
-        (await available(join(project.path, "package.json"))))
-    );
+    const [_out, _err, exitCode] = await this.run(project, "mvn");
+    return exitCode === 1 && (await available(join(project.path, "pom.xml")));
   }
 
   public async loadDependencies(project: Project): Promise<Dependency[]> {
@@ -221,32 +259,31 @@ export class MavenWatcher extends Watcher {
       nameMap.set(value.name, value)
     );
 
-    Object.entries(all.dependencies).forEach(([name, value]) => {
+    all.dependencies.forEach((value) => {
+      const name = value.group + ":" + value.name;
       let dependency = nameMap.get(name);
 
       if (!dependency) {
         nameMap.set(name, (dependency = new Dependency()));
       }
 
+      dependency.data = JSON.stringify([value]);
       dependency.name = name;
       dependency.currentVersion = value.version;
       return dependency;
     });
 
-    Object.entries(outdated).forEach(([name, value]) => {
+    outdated.forEach((value) => {
+      const name = value.group + ":" + value.name;
       const dependency = nameMap.get(name);
       if (!dependency) {
         throw new Error(
           "Outdated Package was not listed together with all Packages"
         );
       }
-      dependency.data = JSON.stringify([value]);
       const availableVersions = [];
       if (value.latest !== value.current) {
         availableVersions.push(value.latest);
-      }
-      if (value.wanted !== value.current && value.wanted !== value.latest) {
-        availableVersions.push(value.wanted);
       }
       dependency.availableVersions = JSON.stringify(availableVersions);
       return dependency;
@@ -255,15 +292,15 @@ export class MavenWatcher extends Watcher {
   }
 
   private async listAllDependencies(project: Project): Promise<MavenProject> {
-    const args = ["ls", "--json"];
+    const args = ["dependency:tree", "-DoutputType=dot"];
 
     if (project.isGlobal) {
       args.push("-g");
     }
 
-    const [output, error] = await this.run(project, "npm", ...args);
+    const [output, error, exitCode] = await this.run(project, "mvn", ...args);
 
-    if (error) {
+    if (error && exitCode) {
       throw Error(error);
     }
     // TODO: return all items
@@ -272,19 +309,19 @@ export class MavenWatcher extends Watcher {
 
   private async listOutdatedDependencies(
     project: Project
-  ): Promise<Record<string, NpmOutdatedDependency>> {
-    const args = ["outdated", "--json"];
+  ): Promise<MavenOutdatedDependency[]> {
+    const args = ["versions:display-dependency-updates"];
 
     if (project.isGlobal) {
       args.push("-g");
     }
 
-    const [output, error] = await this.run(project, "npm", ...args);
+    const [output, error, exitCode] = await this.run(project, "mvn", ...args);
 
-    if (error) {
+    if (error && exitCode) {
       throw Error(error);
     }
-    return JSON.parse(output);
+    return parseOutdatedDependencies(output);
   }
 
   private run(
