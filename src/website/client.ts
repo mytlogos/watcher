@@ -195,12 +195,17 @@ export const projectApi = {
     project: T,
     validityOnly?: boolean
   ): Promise<T> {
-    return queryServer(
+    return queryServer<T, T>(
       {
         path: `project/check?check=${validityOnly ? "valid" : "full"}`,
         method: Method.POST,
       },
       project
-    );
+    ).then((value) => {
+      if (value.meta?.lastRun) {
+        value.meta.lastRun = new Date(value.meta?.lastRun);
+      }
+      return value;
+    });
   },
 };
