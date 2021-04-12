@@ -23,9 +23,6 @@
               <router-link class="nav-link" to="/">Home</router-link>
             </li>
             <li class="nav-item">
-              <router-link class="nav-link" to="/">Add Watcher</router-link>
-            </li>
-            <li class="nav-item">
               <button class="btn" type="button" @click="createProject">
                 Add Project
               </button>
@@ -46,12 +43,8 @@ import CreateProject from "./components/CreateProject.vue";
 export default defineComponent({
   name: "App",
   components: { CreateProject },
-  created() {
-    console.log("Created");
-  },
   methods: {
     createProject() {
-      console.log(this.$refs.createProjectModal);
       (this.$refs.createProjectModal as typeof CreateProject).show();
     },
   },

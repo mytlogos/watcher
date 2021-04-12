@@ -1,5 +1,5 @@
 import createError, { HttpError } from "http-errors";
-import express, { Request, Response } from "express";
+import express, { NextFunction, Request, Response } from "express";
 import path from "path";
 import logger from "morgan";
 import compression from "compression";
@@ -60,13 +60,11 @@ app.use((req, res) => {
 
 // catch 404 and forward to error handler
 app.all("*", (req, res, next) => {
-  console.log("i am a fallback handler");
   next(createError(404));
 });
 
 // error handler
-app.use((err: HttpError, req: Request, res: Response) => {
-  console.log("i am a error handler");
+app.use((err: HttpError, req: Request, res: Response, _next: NextFunction) => {
   // set locals, only providing error in development
   res.locals.message = err.message;
   res.locals.error = req.app.get("env") === "development" ? err : {};

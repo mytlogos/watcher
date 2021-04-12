@@ -54,7 +54,6 @@ function onError(error: Error | any) {
  * Event listener for HTTP server "listening" event.
  */
 function onListening() {
-  console.log("I am listening");
   const address = server.address();
 
   if (address != null) {
