@@ -1,9 +1,30 @@
-import { mount } from "@vue/test-utils";
+import { mount, VueWrapper } from "@vue/test-utils";
 import ProjectVue from "@/views/Project.vue";
 import { Project } from "../../src/server/entity/project";
 import { projectApi } from "@/client";
 import flushPromises from "flush-promises";
 
+function testDisplayedDependencies(
+  wrapper: VueWrapper<any>,
+  item: Project
+): void {
+  const deps = wrapper.findAll("[data-test=dependency]");
+  expect(deps).toHaveLength(item.meta?.dependencies?.length || 0);
+
+  for (let i = 0; i < deps.length; i++) {
+    const dep = deps[i];
+    const depItem = item.meta?.dependencies && item.meta.dependencies[i];
+
+    expect(depItem).toBeDefined();
+    expect(dep.find("[data-test=dep_name]").text()).toEqual(
+      (depItem as NonNullable<typeof depItem>).name
+    );
+    expect(dep.find("[data-test=dep_current]").text()).toEqual(
+      (depItem as NonNullable<typeof depItem>).currentVersion
+    );
+    // TODO: test for available versions
+  }
+}
 describe("Project.vue", () => {
   it("renders unchecked non-global project correctly", async () => {
     const item = {
@@ -39,6 +60,8 @@ describe("Project.vue", () => {
     expect(wrapper.find("[data-test=outdated_dependencies]").text()).toEqual(
       "Unknown Outdated"
     );
+
+    testDisplayedDependencies(wrapper, item);
   });
   it("renders unchecked global project correctly", async () => {
     const item = {
@@ -72,6 +95,8 @@ describe("Project.vue", () => {
     expect(wrapper.find("[data-test=outdated_dependencies]").text()).toEqual(
       "Unknown Outdated"
     );
+
+    testDisplayedDependencies(wrapper, item);
   });
   it("renders checked project without dependencies correctly", async () => {
     const item = {
@@ -117,6 +142,8 @@ describe("Project.vue", () => {
     expect(
       wrapper.find("[data-test=outdated_dependencies]").classes()
     ).toContain("bg-success");
+
+    testDisplayedDependencies(wrapper, item);
   });
   it("renders checked project with dependencies correctly", async () => {
     const item = {
@@ -177,5 +204,7 @@ describe("Project.vue", () => {
     expect(
       wrapper.find("[data-test=outdated_dependencies]").classes()
     ).toContain("bg-warning");
+
+    testDisplayedDependencies(wrapper, item);
   });
 });

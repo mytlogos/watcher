@@ -64,6 +64,7 @@
             class="list-group-item d-flex row m-0"
             v-for="item in dependencies"
             :key="item.id"
+            data-test="dependency"
           >
             <span class="col-4" data-test="dep_name">{{ item.name }}</span>
             <span class="col-4" data-test="dep_current">{{
