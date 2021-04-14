@@ -6,7 +6,7 @@
         <div class="d-flex w-100 justify-content-between">
           <span data-test="type">{{ item?.type }}</span>
           <span title="Last run" data-test="last_run">{{
-            (item?.meta && item.meta.lastRun.toLocaleString()) || "Never"
+            item?.meta?.lastRun?.toLocaleString() || "Never"
           }}</span>
         </div>
         <div class="d-flex w-100 justify-content-between">
