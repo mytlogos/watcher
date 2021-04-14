@@ -2,19 +2,25 @@
   <div class="container list">
     <div class="card my-5">
       <div class="card-body">
-        <h5>Project: {{ item?.name }}</h5>
+        <h5 data-test="name">Project: {{ item?.name }}</h5>
         <div class="d-flex w-100 justify-content-between">
-          <span>{{ item?.type }}</span>
-          <span title="Last run">{{
+          <span data-test="type">{{ item?.type }}</span>
+          <span title="Last run" data-test="last_run">{{
             (item?.meta && item.meta.lastRun.toLocaleString()) || "Never"
           }}</span>
         </div>
         <div class="d-flex w-100 justify-content-between">
-          <span class="my-auto">Location: {{ pathDisplay }}</span>
-          <span class="my-auto" v-if="loading">Checking...</span>
+          <span class="my-auto" data-test="path"
+            >Location: {{ pathDisplay }}</span
+          >
+          <span class="my-auto" v-if="loading" data-test="load"
+            >Checking...</span
+          >
         </div>
         <div class="d-flex w-100 justify-content-between">
-          <span class="my-auto">{{ dependencyCount }} Dependencies</span>
+          <span class="my-auto" data-test="all_dependencies"
+            >{{ dependencyCount }} Dependencies</span
+          >
           <span
             class="badge my-auto"
             :class="{
@@ -24,14 +30,26 @@
               'bg-danger': outdatedDependencyCount > 0,
             }"
             style="max-height: 2em"
+            data-test="outdated_dependencies"
           >
             {{ outdatedDependencies }} Outdated
           </span>
           <div class="d-inline-block">
-            <button class="btn btn-info m-1" type="button" @click="check">
+            <button
+              class="btn btn-info m-1"
+              type="button"
+              role="button"
+              @click="check"
+              data-test="check"
+            >
               Recheck
             </button>
-            <button class="btn btn-danger m-1 disabled" type="button">
+            <button
+              class="btn btn-danger m-1 disabled"
+              type="button"
+              role="button"
+              data-test="delete"
+            >
               Delete
             </button>
           </div>
@@ -47,13 +65,16 @@
             v-for="item in dependencies"
             :key="item.id"
           >
-            <span class="col-4">{{ item.name }}</span>
-            <span class="col-4">{{ item.currentVersion }}</span>
+            <span class="col-4" data-test="dep_name">{{ item.name }}</span>
+            <span class="col-4" data-test="dep_current">{{
+              item.currentVersion
+            }}</span>
             <span class="col-4" v-show="item.availableVersions.length">
               <span
                 v-for="version in item.availableVersions"
                 :key="version"
                 class="badge bg-warning"
+                data-test="dep_available"
                 >{{ version }}</span
               >
             </span>
