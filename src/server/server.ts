@@ -81,7 +81,7 @@ function onListening() {
         }'`
       );
       console.info(
-        `Process PID: ${process.pid} in environment '${process.env.NODE_ENV}'`
+        `Process PID: ${process.pid} in environment '${process.env.NODE_ENV}', website displayed on http://localhost:${port}/`
       );
       break;
     }
