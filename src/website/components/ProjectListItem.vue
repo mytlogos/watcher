@@ -1,17 +1,19 @@
 <template>
   <div class="d-flex w-100 justify-content-between">
-    <h5>{{ item.name }}</h5>
-    <span>{{ item.type }}</span>
-    <span title="Last run">{{
+    <h5 data-test="name">{{ item.name }}</h5>
+    <span data-test="type">{{ item.type }}</span>
+    <span title="Last run" data-test="last_run">{{
       (item.meta && item.meta.lastRun.toLocaleString()) || "Never"
     }}</span>
   </div>
   <div class="d-flex w-100 justify-content-between">
-    <span class="my-auto">Location: {{ pathDisplay }}</span>
-    <span class="my-auto" v-if="loading">Checking...</span>
+    <span class="my-auto" data-test="path">Location: {{ pathDisplay }}</span>
+    <span class="my-auto" v-if="loading" data-test="load">Checking...</span>
   </div>
   <div class="d-flex w-100 justify-content-between">
-    <span class="my-auto">{{ dependencyCount }} Dependencies</span>
+    <span class="my-auto" data-test="all_dependencies"
+      >{{ dependencyCount }} Dependencies</span
+    >
     <span
       class="badge my-auto"
       :class="{
@@ -21,15 +23,29 @@
         'bg-danger': outdatedDependencyCount > 0,
       }"
       style="max-height: 2em"
+      data-test="outdated_dependencies"
     >
       {{ outdatedDependencies }}
       Outdated
     </span>
     <div class="d-inline-block">
-      <button class="btn btn-info m-1" type="button" @click.stop="check">
+      <button
+        class="btn btn-info m-1"
+        type="button"
+        role="button"
+        @click.stop="check"
+        data-test="check"
+      >
         Recheck
       </button>
-      <button class="btn btn-danger m-1 disabled" type="button">Delete</button>
+      <button
+        class="btn btn-danger m-1 disabled"
+        type="button"
+        role="button"
+        data-test="delete"
+      >
+        Delete
+      </button>
     </div>
   </div>
 </template>
