@@ -36,7 +36,7 @@
 <script lang="ts">
 import { Project } from "src/server/entity/project";
 import { defineComponent, PropType } from "vue";
-import { projectApi } from "../client";
+import { projectApi } from "@/client";
 
 export default defineComponent({
   name: "ProjectListItem",

@@ -3,17 +3,18 @@
   "version": "0.4.0",
   "private": true,
   "scripts": {
-    "start": "node dist/server/server.js",
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
-    "build:dev": "vue-cli-service build --mode development",
-    "build:server": "tsc -p src/server/",
     "test:unit": "vue-cli-service test:unit",
     "test:e2e": "vue-cli-service test:e2e",
     "lint": "vue-cli-service lint",
-    "scratch": "node test.js"
+    "build:dev": "vue-cli-service build --mode development",
+    "build:server": "tsc -p src/server/",
+    "scratch": "node test.js",
+    "start": "node dist/server/server.js"
   },
   "dependencies": {
+    "@popperjs/core": "^2.9.2",
     "bootstrap": "^5.0.0-beta3",
     "brotli": "^1.3.2",
     "compression": "^1.7.4",
@@ -33,35 +34,37 @@
   },
   "devDependencies": {
     "@types/bootstrap": "^5.0.12",
-    "@types/chai": "^4.2.11",
     "@types/compression": "^1.7.0",
     "@types/debug": "^4.1.5",
     "@types/http-errors": "^1.8.0",
-    "@types/mocha": "^5.2.4",
+    "@types/jest": "^26.0.22",
     "@types/morgan": "^1.9.2",
     "@types/node": "^14.14.37",
     "@typescript-eslint/eslint-plugin": "^4.18.0",
     "@typescript-eslint/parser": "^4.18.0",
-    "@vue/cli-plugin-babel": "~4.5.0",
-    "@vue/cli-plugin-e2e-cypress": "~4.5.0",
-    "@vue/cli-plugin-eslint": "~4.5.0",
-    "@vue/cli-plugin-pwa": "~4.5.0",
-    "@vue/cli-plugin-router": "~4.5.0",
-    "@vue/cli-plugin-typescript": "~4.5.0",
-    "@vue/cli-plugin-unit-mocha": "~4.5.0",
-    "@vue/cli-plugin-vuex": "~4.5.0",
-    "@vue/cli-service": "~4.5.0",
-    "@vue/compiler-sfc": "^3.0.0",
+    "@vue/cli-plugin-babel": "~5.0.0-alpha.8",
+    "@vue/cli-plugin-e2e-cypress": "~5.0.0-alpha.8",
+    "@vue/cli-plugin-eslint": "~5.0.0-alpha.8",
+    "@vue/cli-plugin-pwa": "~5.0.0-alpha.8",
+    "@vue/cli-plugin-router": "~5.0.0-alpha.8",
+    "@vue/cli-plugin-typescript": "~5.0.0-alpha.8",
+    "@vue/cli-plugin-unit-jest": "~5.0.0-alpha.8",
+    "@vue/cli-plugin-vuex": "~5.0.0-alpha.8",
+    "@vue/cli-plugin-webpack-4": "~5.0.0-alpha.8",
+    "@vue/cli-service": "~5.0.0-alpha.8",
+    "@vue/compiler-sfc": "^3.0.11",
     "@vue/eslint-config-prettier": "^6.0.0",
     "@vue/eslint-config-typescript": "^7.0.0",
     "@vue/test-utils": "^2.0.0-0",
-    "chai": "^4.1.2",
-    "eslint": "^6.7.2",
+    "eslint": "~7.5.0",
     "eslint-plugin-prettier": "^3.3.1",
     "eslint-plugin-vue": "^7.0.0",
-    "lint-staged": "^9.5.0",
+    "lint-staged": "^10.5.4",
     "prettier": "^2.2.1",
-    "typescript": "~4.1.5"
+    "ts-jest": "^26.5.4",
+    "typescript": "~4.1.5",
+    "vue-jest": "^5.0.0-alpha.8",
+    "webpack": "^4.0.0"
   },
   "gitHooks": {
     "pre-commit": "lint-staged"
@@ -71,5 +74,9 @@
       "vue-cli-service lint",
       "git add"
     ]
+  },
+  "resolutions": {
+    "@vue/cli-*/webpack": "^4.0.0",
+    "html-webpack-plugin": "^4.5.1"
   }
 }

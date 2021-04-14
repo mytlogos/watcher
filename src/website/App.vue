@@ -38,7 +38,7 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import CreateProject from "./components/CreateProject.vue";
+import CreateProject from "@/components/CreateProject.vue";
 
 export default defineComponent({
   name: "App",

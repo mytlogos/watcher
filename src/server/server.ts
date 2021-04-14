@@ -75,7 +75,7 @@ function onListening() {
       ) {
         continue;
       }
-      debugMessenger(
+      console.log(
         `Listening on ${bind} with Ip: '${
           foundIpInterface && foundIpInterface.address
         }'`

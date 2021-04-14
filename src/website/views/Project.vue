@@ -66,7 +66,7 @@
 <script lang="ts">
 import { Dependency, Project } from "src/server/entity/project";
 import { defineComponent } from "vue";
-import { projectApi } from "../client";
+import { projectApi } from "@/client";
 
 // @ts-expect-error overwrite string to parsed value
 interface ParsedDependency extends Dependency {

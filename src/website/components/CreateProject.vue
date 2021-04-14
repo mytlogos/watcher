@@ -52,8 +52,8 @@
 </template>
 <script lang="ts">
 import { defineComponent } from "vue";
-import { projectApi } from "../client";
-import modal from "./modal.vue";
+import { projectApi } from "@/client";
+import modal from "@/components/modal.vue";
 
 export default defineComponent({
   name: "CreateProject",

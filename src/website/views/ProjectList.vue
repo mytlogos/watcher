@@ -22,7 +22,7 @@
 import { defineComponent } from "vue";
 import { projectApi } from "../client";
 import { mapState } from "vuex";
-import ProjectListItem from "../components/ProjectListItem.vue";
+import ProjectListItem from "@/components/ProjectListItem.vue";
 
 export default defineComponent({
   components: { ProjectListItem },
