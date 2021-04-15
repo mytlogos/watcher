@@ -66,7 +66,7 @@ router.delete("/:id(\\d+)", async function (req, res) {
     .where("id = :id", { id })
     .execute();
 
-  res.json((result.affected || 0) > 0);
+  res.json(!result.affected || result.affected > 0);
 });
 
 export default router;
