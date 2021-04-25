@@ -5,19 +5,27 @@ import logger from "morgan";
 import compression from "compression";
 // helps by preventing some known http vulnerabilities by setting http headers appropriately
 import helmet from "helmet";
-import { createConnection } from "typeorm";
+import { AlreadyHasActiveConnectionError, createConnection } from "typeorm";
 import apiRouter from "./routes/api";
+import { watch } from "./watcher";
 
 export const app = express();
 
 const parentDirName = path.dirname(path.dirname(__dirname));
 
 let started = false;
+watch();
 
 app.use(async (_req, _res, next) => {
   if (!started) {
     started = true;
-    await createConnection();
+    try {
+      await createConnection();
+    } catch (error) {
+      if (!(error instanceof AlreadyHasActiveConnectionError)) {
+        throw error;
+      }
+    }
   }
   console.log("Incoming request: " + _req.method + " " + _req.url);
   next();
