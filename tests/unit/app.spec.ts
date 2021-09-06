@@ -4,7 +4,7 @@ import request from "supertest";
 import { Project } from "../../src/server/entity/project";
 import * as entities from "../../src/server/entity/project";
 
-describe("test express app", () => {
+describe.skip("test express app", () => {
   beforeAll(() => {
     const original = typeorm.createConnection;
     jest.spyOn(typeorm, "createConnection").mockImplementation(() =>

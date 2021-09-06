@@ -32,6 +32,7 @@ app.use(async (_req, _res, next) => {
 });
 
 app.use(
+  // @ts-expect-error morgan types do not match express types?
   logger(":method :url :status :response-time ms - :res[content-length]", {
     stream: {
       write(str: string): void {
@@ -41,10 +42,12 @@ app.use(
   })
 );
 
+// @ts-expect-error wrong typings??
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(compression());
 
 // only accept json as req body
+// @ts-expect-error wrong typings??
 app.use(express.json());
 
 app.use("/api", apiRouter);
