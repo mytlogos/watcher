@@ -31,7 +31,7 @@
     "typeorm": "^0.2.32",
     "vue": "^3.0.0",
     "vue-router": "^4.0.0-0",
-    "vuex": "^4.0.0-0"
+    "vuex": "^4.0.2"
   },
   "devDependencies": {
     "@types/bootstrap": "^5.0.12",
