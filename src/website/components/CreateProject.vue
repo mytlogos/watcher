@@ -95,7 +95,7 @@ export default defineComponent({
       this.nameTyped = false;
     },
     getModal(): typeof modal {
-      return (this.$refs.modal as unknown) as typeof modal;
+      return this.$refs.modal as unknown as typeof modal;
     },
     async submit() {
       try {
@@ -113,7 +113,11 @@ export default defineComponent({
         this.$store.commit("addProject", project);
       } catch (error) {
         console.error(error);
-        this.getModal().showError(error.message);
+        this.getModal().showError(
+          typeof error === "object" && error && "message" in error
+            ? (error as Error).message
+            : error + ""
+        );
         return false;
       }
       return true;
