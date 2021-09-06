@@ -1,5 +1,8 @@
 import { spawn } from "child_process";
+import { readFile, writeFile } from "fs/promises";
+import { fstat } from "node:fs";
 import { join } from "path";
+import { compare } from "semver";
 import { Dependency, Project, ProjectMeta } from "../entity/project";
 import { available, CheckOptions, Watcher } from "./watcher";
 
@@ -45,6 +48,33 @@ export class NodeWatcher extends Watcher {
       project.meta.lastRun = new Date();
     }
     return project;
+  }
+
+  public async createCiFile(project: Project): Promise<void> {
+    console.log("Method not implemented.");
+  }
+
+  public async upgradeDeps(
+    project: Project,
+    dependencies: Dependency[]
+  ): Promise<void> {
+    const packageFile = join(project.path, "package.json");
+    let content = await readFile(packageFile, { encoding: "utf-8" });
+
+    for (const dependency of dependencies) {
+      let newVersion = dependency.currentVersion;
+
+      for (const version of JSON.parse(dependency.availableVersions)) {
+        if (compare(version, newVersion) > 0) {
+          newVersion = version;
+        }
+      }
+      content = content.replace(
+        new RegExp(`("${dependency.name}":\\s*"[~^]?).+?"`),
+        `$1${newVersion}"`
+      );
+    }
+    await writeFile(packageFile, content, { encoding: "utf-8" });
   }
 
   private async checkPathValidity(project: Project): Promise<boolean> {

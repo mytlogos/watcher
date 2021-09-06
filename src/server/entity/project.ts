@@ -64,6 +64,11 @@ export class Project extends DBEntity {
   @OneToOne(() => ProjectMeta, { eager: true, cascade: true })
   @JoinColumn()
   meta?: ProjectMeta;
+  @OneToMany(() => RemoteProject, (dependeny) => dependeny.project, {
+    cascade: true,
+    eager: true,
+  })
+  remotes?: RemoteProject[];
 
   constructor() {
     super();
@@ -72,5 +77,24 @@ export class Project extends DBEntity {
     this.name = "";
     this.isGlobal = false;
     this.meta = undefined;
+  }
+}
+
+@Entity()
+export class RemoteProject extends DBEntity {
+  @Column()
+  path: string;
+  @Column()
+  name: string;
+  @ManyToOne(() => Project, (dependency) => dependency.remotes)
+  project: Project;
+
+  constructor() {
+    super();
+    this.path = "";
+    this.name = "";
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    this.project = null;
   }
 }

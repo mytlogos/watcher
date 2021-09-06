@@ -40,6 +40,16 @@ export class PythonWatcher extends Watcher {
     return project;
   }
 
+  public async createCiFile(project: Project): Promise<void> {
+    console.log("Method not implemented.");
+  }
+  public async upgradeDeps(
+    project: Project,
+    dependencies: Dependency[]
+  ): Promise<void> {
+    console.log("Method not implemented.");
+  }
+
   private async checkPathValidity(project: Project): Promise<boolean> {
     const pipCommand = this.getPip(project);
     const [_out, _err, exitCode] = await this.run(project, pipCommand);
