@@ -38,7 +38,7 @@
   },
   "devDependencies": {
     "@types/bootstrap": "^5.1.4",
-    "@types/compression": "^1.7.1",
+    "@types/compression": "^1.7.2",
     "@types/debug": "^4.1.7",
     "@types/http-errors": "^1.8.1",
     "@types/jest": "^27.0.1",
