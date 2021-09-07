@@ -65,6 +65,8 @@
         <ul class="list-group">
           <li class="list-group-item d-flex row m-0 bg-secondary text-light">
             <span class="col-4">Name</span>
+            <span class="col-4">Host</span>
+            <span class="col-4">User</span>
           </li>
           <li
             class="list-group-item d-flex row m-0"
@@ -73,6 +75,10 @@
             data-test="remotesetting"
           >
             <span class="col-4" data-test="remote_name">{{ item.name }}</span>
+            <span class="col-4" data-test="remote_host">{{ item.host }}</span>
+            <span class="col-4" data-test="remote_user">{{
+              item.username
+            }}</span>
           </li>
         </ul>
       </div>
