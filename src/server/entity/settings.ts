@@ -22,11 +22,15 @@ export class RemoteSetting extends DBEntity {
   @Column()
   token: string;
 
+  @Column()
+  priority: number;
+
   constructor() {
     super();
     this.name = "";
     this.host = "";
     this.username = "";
     this.token = "";
+    this.priority = 0;
   }
 }

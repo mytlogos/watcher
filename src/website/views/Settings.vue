@@ -30,6 +30,20 @@
             </div>
           </div>
           <div class="mb-3">
+            <label for="new-remote-priority" class="form-label">Priority</label>
+            <input
+              type="number"
+              min="0"
+              class="form-control"
+              id="new-remote-priority"
+              v-model="newRemote.priority"
+              aria-describedby="new-remote-priority-help"
+            />
+            <div id="new-remote-priority-help" class="form-text">
+              The higher the value the smaller the priority
+            </div>
+          </div>
+          <div class="mb-3">
             <label for="new-remote-username" class="form-label">Username</label>
             <input
               type="text"
@@ -74,7 +88,14 @@
             :key="item.id"
             data-test="remotesetting"
           >
-            <span class="col-4" data-test="remote_name">{{ item.name }}</span>
+            <span class="col-4" data-test="remote_name"
+              >{{ item.name }}
+              <span
+                class="badge rounded-pill bg-light text-dark"
+                title="Priority"
+                >{{ item.priority }}</span
+              >
+            </span>
             <span class="col-4" data-test="remote_host">{{ item.host }}</span>
             <span class="col-4" data-test="remote_user">{{
               item.username
@@ -103,6 +124,7 @@ export default defineComponent({
         host: "",
         username: "",
         token: "",
+        priority: 0,
       } as RemoteSetting,
     };
   },
@@ -116,6 +138,7 @@ export default defineComponent({
         host: this.newRemote.host,
         username: this.newRemote.username,
         token: this.newRemote.token,
+        priority: this.newRemote.priority,
       });
       this.settings.remotes.push(result);
     },
