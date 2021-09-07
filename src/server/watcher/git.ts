@@ -79,8 +79,8 @@ async function readGitEnv(): Promise<GitEnv> {
 const gitEnv = readGitEnv();
 
 /**
- * Creates a simpleGit instance with email and username
- * configured and base path set to the project path.
+ * Creates a simpleGit instance (with email and username
+ * configured if a git repo) and base path set to the project path.
  *
  * @param project project to get a SimpleGit instance from
  * @returns a SimpleGit Instance
@@ -90,7 +90,7 @@ async function getGit(project: Project): Promise<SimpleGit> {
     baseDir: project.path,
   });
   if (!git.checkIsRepo()) {
-    throw Error("Not a Git Repository: " + project.path);
+    return git;
   }
   const values = await gitEnv;
   git.addConfig("user.email", values.mail);
