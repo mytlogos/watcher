@@ -8,7 +8,7 @@ import {
   PrimaryGeneratedColumn,
 } from "typeorm";
 
-class DBEntity {
+export class DBEntity {
   @PrimaryGeneratedColumn()
   id!: number;
 }

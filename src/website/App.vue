@@ -27,6 +27,11 @@
                 Add Project
               </button>
             </li>
+            <li class="nav-item">
+              <router-link class="nav-link" to="/settings"
+                >Settings</router-link
+              >
+            </li>
           </ul>
         </div>
       </div>

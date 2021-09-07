@@ -1,4 +1,5 @@
 import { Project } from "src/server/entity/project";
+import { RemoteSetting } from "src/server/entity/settings";
 
 enum Method {
   GET = "GET",
@@ -41,9 +42,12 @@ class HttpError extends Error {
   }
 }
 
-async function queryServer<V extends Record<string, any>, R>(
+async function queryServer<
+  R = void,
+  QueryValue extends Record<string, any> = any
+>(
   { path, method }: { path: string; method: Method },
-  query?: V
+  query?: QueryValue
 ): Promise<R> {
   const init = {
     method,
@@ -135,7 +139,7 @@ function createRest<T extends Entity>(
   }
   return {
     create: (value) => {
-      return queryServer<Create<T>, T>(
+      return queryServer<T, Create<T>>(
         {
           path,
           method: Method.POST,
@@ -162,7 +166,7 @@ function createRest<T extends Entity>(
       );
     },
     get: (id) => {
-      return queryServer<Entity, T>(
+      return queryServer<T, Entity>(
         {
           path: path + "/:id",
           method: Method.GET,
@@ -173,7 +177,7 @@ function createRest<T extends Entity>(
       ).then(rehydrate);
     },
     getAll: async () => {
-      return queryServer<never, T[]>({
+      return queryServer<T[], never>({
         path,
         method: Method.GET,
       }).then((values) => values.map((value) => rehydrate(value)));
@@ -207,5 +211,24 @@ export const projectApi = {
       }
       return value;
     });
+  },
+};
+
+export const settingsApi = {
+  get(): Promise<{ remotes: RemoteSetting[] }> {
+    return queryServer<{ remotes: RemoteSetting[] }>({
+      path: `settings`,
+      method: Method.GET,
+    });
+  },
+
+  createRemoteSetting(remote: Create<RemoteSetting>): Promise<RemoteSetting> {
+    return queryServer<RemoteSetting, Create<RemoteSetting>>(
+      {
+        path: `settings/remote`,
+        method: Method.POST,
+      },
+      remote
+    );
   },
 };
