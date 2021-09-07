@@ -34,6 +34,8 @@ router.get("/", async function (req, res) {
 router.post("/remote", async function (req, res) {
   const setting = mapRemoteSetting(req.body);
   const result = await getManager().save(setting);
+  // do not leak token
+  result.token = "";
   res.json(result);
 });
 
