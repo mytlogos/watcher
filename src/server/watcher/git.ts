@@ -5,15 +5,29 @@ import fs from "fs/promises";
 import path from "path";
 import { Octokit } from "@octokit/core";
 
-export async function available(path: string): Promise<boolean> {
+/**
+ * Checks whether the path in the given string is accessible by this process.
+ *
+ * @param fsPath file system path to check
+ * @returns true if the path is accessible
+ */
+export async function available(fsPath: string): Promise<boolean> {
   try {
-    await fs.access(path);
+    await fs.access(fsPath);
     return true;
   } catch {
     return false;
   }
 }
 
+/**
+ * Naively parses the lines in an env file
+ * skipping any lines which do not match "KEY=VALUE".
+ * Expects Line-Endings in LF Format.
+ *
+ * @param content contents of an env file
+ * @returns record of env keys and their values
+ */
 function parseEnv(content: string): Record<string, string> {
   const lines = content.split("\n");
   const values = {} as Record<string, string>;
@@ -36,6 +50,13 @@ interface GitEnv {
   mail: string;
 }
 
+/**
+ * Tries to read the Git credentials from the env.env in the nearest (parent-)directory
+ * containing a package.json file. Starts from the directory which contains this file,
+ * not the current working directory.
+ *
+ * @returns Git Credential Values
+ */
 async function readGitEnv(): Promise<GitEnv> {
   const rootFile = "package.json";
   let rootDir = __dirname;
@@ -57,16 +78,34 @@ async function readGitEnv(): Promise<GitEnv> {
 
 const gitEnv = readGitEnv();
 
+/**
+ * Creates a simpleGit instance with email and username
+ * configured and base path set to the project path.
+ *
+ * @param project project to get a SimpleGit instance from
+ * @returns a SimpleGit Instance
+ */
 async function getGit(project: Project): Promise<SimpleGit> {
   const git = simpleGit({
     baseDir: project.path,
   });
+  if (!git.checkIsRepo()) {
+    throw Error("Not a Git Repository: " + project.path);
+  }
   const values = await gitEnv;
   git.addConfig("user.email", values.mail);
   git.addConfig("user.name", values.user);
   return git;
 }
 
+/**
+ * "Syncs" the Remotes of the Project with the Remotes of
+ * the Git Repository at the Path of the Project.
+ * Currently adds only Git Remotes unknown to the project.
+ *
+ * @param project project to sync the remotes of
+ * @returns nothing
+ */
 export async function checkRemotes(project: Project): Promise<void> {
   const currentRemotes = project.remotes || [];
   const git = await getGit(project);
@@ -101,6 +140,13 @@ export async function checkRemotes(project: Project): Promise<void> {
   }
 }
 
+/**
+ * Checks whether the Project Path is
+ * a Git Repository.
+ *
+ * @param project project to check
+ * @returns true if it is an git repository
+ */
 export async function isRepo(project: Project): Promise<boolean> {
   if (project.isGlobal) {
     return Promise.resolve(false);
@@ -110,6 +156,16 @@ export async function isRepo(project: Project): Promise<boolean> {
   return git.checkIsRepo();
 }
 
+/**
+ * Checkout the Git repository of the Project to the given branch.
+ * Creates the Branch locally if it does not exist.
+ * Tries to push branch to the watcher remote.
+ * Tries to pull changes from remote.
+ *
+ * @param project project to checkout
+ * @param branch branch name to checkout to
+ * @returns nothing
+ */
 export async function checkout(
   project: Project,
   branch: string
@@ -132,6 +188,8 @@ export async function checkout(
     console.log("checking out to new branch: ", branch);
     await git.checkout(["-b", branch]);
   }
+  // TODO: remotes should be configured by user etc.
+  // TODO: Do not create weird remotes, pull only if remote is configured (which it should always do?)
   const remote = await createAuthenticatedRemote(git, project.remotes);
 
   await git.remote(["show", remote?.name || ""]);
@@ -144,6 +202,14 @@ export async function checkout(
 
 const WATCHER_SUFFIX = "-watcher";
 
+/**
+ * Get the name of a watcher remote.
+ * This method should be removed, as watcher remotes should be removed.
+ *
+ * @param git configured SimpleGit Instance
+ * @param remotes current remotes
+ * @returns a remote name with the watcher-suffix
+ */
 async function getRemote(
   git: SimpleGit,
   remotes?: RemoteProject[]
@@ -164,6 +230,17 @@ async function getRemote(
   return watcherRemote?.name;
 }
 
+/**
+ * Get a RemoteProject with Authentication
+ * embedded in it's URL or undefined if
+ * it could not create such an object.
+ * (Does not save it in database, only adding it to the git repository).
+ * TODO: This method should be removed.
+ *
+ * @param git SimpleGit Instance
+ * @param remotes available Remotes
+ * @returns Authenticated RemoteProject or undefined
+ */
 async function createAuthenticatedRemote(
   git: SimpleGit,
   remotes?: RemoteProject[]
@@ -199,6 +276,13 @@ async function createAuthenticatedRemote(
   return authRemote;
 }
 
+/**
+ * Clone a Project from its first defined Remote, if available
+ * into the path of the project.
+ *
+ * @param project project to clone
+ * @returns true if it succeeded
+ */
 export async function clone(project: Project): Promise<boolean> {
   if (project.isGlobal) {
     return false;
@@ -215,6 +299,14 @@ export async function clone(project: Project): Promise<boolean> {
   return true;
 }
 
+/**
+ * Commits all changes with a standard message
+ * and pushed the current branch to its remote.
+ *
+ * TODO: make commit message a parameter (more fine-grined commit message)
+ * TODO: "stage all changes" as boolean parameter
+ * @param project project with git repo to commit and push
+ */
 export async function commitAndPush(project: Project): Promise<void> {
   const git = await getGit(project);
   await git.add("*");
@@ -226,6 +318,17 @@ export async function commitAndPush(project: Project): Promise<void> {
   }
 }
 
+/**
+ * Create a Pull Request from the current branch to the base
+ * which it finds it first in this list: "next", "develop", "master", "main"
+ *
+ * Currently only github.com Remotes are supported.
+ *
+ * TODO: support gitea
+ *
+ * @param project project with git repo to create a Pull Request for
+ * @returns undefined
+ */
 export async function createPullRequest(project: Project): Promise<void> {
   const env = await gitEnv;
   const remoteReg = /.+\/\/github.com\/.+\/(\w+)\.git/;
