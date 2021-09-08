@@ -2,6 +2,7 @@ import { spawn } from "child_process";
 import { join } from "path";
 import { Dependency, Project, ProjectMeta } from "../entity/project";
 import { available, CheckOptions, Watcher } from "./watcher";
+import log from "npmlog";
 
 interface MavenProject {
   version: string;
@@ -124,7 +125,8 @@ function parseDependencyTree(value: string): MavenProject[] {
   // remove any log levels like: '[INFO]' at the start of a line
   value = value.replace(/\n\[.+?\]\s*/g, "\n");
   // this regex catches the start of the "dot" output type
-  const startRegex = /digraph\s+"([^:\s]+):([^:\s]+):([^:\s]+):([^:\s]:)*([^:\s]+)"\s{\s+/g;
+  const startRegex =
+    /digraph\s+"([^:\s]+):([^:\s]+):([^:\s]+):([^:\s]:)*([^:\s]+)"\s{\s+/g;
   // a line with a closing curvy brace marks the end
   const endRegex = /}\s+/g;
 
@@ -133,7 +135,8 @@ function parseDependencyTree(value: string): MavenProject[] {
   if (!startResult) {
     throw Error("Could not find dependency tree start");
   }
-  const depReg = /"([^:\s]+):([^:\s]+):([^:\s]+):([^:\s]+:)*(\d+(\.[^:\s]+)*)(:([^:\s]+))?" -> "([^:\s]+):([^:\s]+):([^:\s]+):([^:\s]+:)*(\d+(\.[^:\s.]+)*):([^:\s]+)"\s*;\s+/g;
+  const depReg =
+    /"([^:\s]+):([^:\s]+):([^:\s]+):([^:\s]+:)*(\d+(\.[^:\s]+)*)(:([^:\s]+))?" -> "([^:\s]+):([^:\s]+):([^:\s]+):([^:\s]+:)*(\d+(\.[^:\s.]+)*):([^:\s]+)"\s*;\s+/g;
 
   const projects = [];
 
@@ -195,7 +198,8 @@ function parseOutdatedDependencies(value: string): MavenOutdatedDependency[] {
   // remove any log levels like: '[INFO]' at the start of a line
   value = value.replace(/\n\[.+?\]\s*/g, "\n");
 
-  const depReg = /([^:\s]+):([^:\s]+)[\s.]+(\S+(\.\S)*)\s*->\s*(\S+(\.\S)*)\s+/g;
+  const depReg =
+    /([^:\s]+):([^:\s]+)[\s.]+(\S+(\.\S)*)\s*->\s*(\S+(\.\S)*)\s+/g;
 
   let result = depReg.exec(value);
   const dependencies = [];
@@ -240,6 +244,16 @@ export class MavenWatcher extends Watcher {
       project.meta.lastRun = new Date();
     }
     return project;
+  }
+
+  public async createCiFile(project: Project): Promise<void> {
+    log.error("Maven", "Method 'createCiFile' not implemented.");
+  }
+  public async upgradeDeps(
+    project: Project,
+    dependencies: Dependency[]
+  ): Promise<void> {
+    log.error("Maven", "Method 'upgradeDeps' not implemented.");
   }
 
   private async checkPathValidity(project: Project): Promise<boolean> {

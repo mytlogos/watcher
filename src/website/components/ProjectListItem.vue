@@ -3,11 +3,15 @@
     <h5 data-test="name">{{ item.name }}</h5>
     <span data-test="type">{{ item.type }}</span>
     <span title="Last run" data-test="last_run">{{
-      (item.meta && item.meta.lastRun.toLocaleString()) || "Never"
+      (item.meta && item.meta.lastRun && item.meta.lastRun.toLocaleString()) ||
+      "Never"
     }}</span>
   </div>
   <div class="d-flex w-100 justify-content-between">
     <span class="my-auto" data-test="path">Location: {{ pathDisplay }}</span>
+    <span v-if="remoteDisplay" class="my-auto" data-test="path">
+      Remote: <a :href="remoteLink">{{ remoteDisplay }}</a>
+    </span>
     <span class="my-auto" v-if="loading" data-test="load">Checking...</span>
   </div>
   <div class="d-flex w-100 justify-content-between">
@@ -71,6 +75,18 @@ export default defineComponent({
         return "Global";
       }
       return this.item?.path || "";
+    },
+    remoteDisplay(): string {
+      if (this.item.isGlobal) {
+        return "";
+      }
+      return this.item?.remotes?.length ? this.item.remotes[0].name : "";
+    },
+    remoteLink(): string {
+      if (this.item.isGlobal) {
+        return "#";
+      }
+      return this.item?.remotes?.length ? this.item.remotes[0].path : "#";
     },
     dependencyCount(): string {
       if (!this.item.meta) {

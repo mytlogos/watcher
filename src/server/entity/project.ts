@@ -8,7 +8,7 @@ import {
   PrimaryGeneratedColumn,
 } from "typeorm";
 
-class DBEntity {
+export class DBEntity {
   @PrimaryGeneratedColumn()
   id!: number;
 }
@@ -64,6 +64,11 @@ export class Project extends DBEntity {
   @OneToOne(() => ProjectMeta, { eager: true, cascade: true })
   @JoinColumn()
   meta?: ProjectMeta;
+  @OneToMany(() => RemoteProject, (dependeny) => dependeny.project, {
+    cascade: true,
+    eager: true,
+  })
+  remotes?: RemoteProject[];
 
   constructor() {
     super();
@@ -72,5 +77,23 @@ export class Project extends DBEntity {
     this.name = "";
     this.isGlobal = false;
     this.meta = undefined;
+  }
+}
+
+@Entity()
+export class RemoteProject extends DBEntity {
+  @Column()
+  path: string;
+  @Column()
+  name: string;
+  @ManyToOne(() => Project, (dependency) => dependency.remotes)
+  project: Project;
+
+  constructor() {
+    super();
+    this.path = "";
+    this.name = "";
+    // @ts-expect-error must be null for relation to work
+    this.project = null;
   }
 }
