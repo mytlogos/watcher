@@ -1,8 +1,23 @@
 # watcher
 
+## TO-DO
+
+- [ ] Add PR Support for Gitea
+- [ ] Add User Configuration for Remotes in Website
+  - Credentials for Remote Groups (e.g. github.com etc.) (Tokens only)
+  - Per Project and Globally
+- [ ] Support NPM Workspaces
+- [ ] Implement upgradeDeps for pip
+- [ ] Implement upgradeDeps for maven
+
 ## Project setup
 ```
 npm install
+```
+
+### Run Server
+```
+npm start
 ```
 
 ### Compiles and hot-reloads for development
