@@ -407,7 +407,7 @@ export async function commitAndPush(project: Project): Promise<void> {
  */
 export async function createPullRequest(project: Project): Promise<void> {
   const env = await gitEnv;
-  const remoteReg = /.+\/\/github.com\/.+\/(\w+)\.git/;
+  const remoteReg = /.+\/\/github.com\/.+\/([\w-]+)\.git/;
 
   const repoName = (project.remotes || [])
     .map((value) => {
@@ -422,7 +422,7 @@ export async function createPullRequest(project: Project): Promise<void> {
     .find((value) => value);
 
   if (!repoName) {
-    log.info(project.name, "No Repository Name");
+    log.error(project.name, "No Repository Name found");
     return;
   }
 
