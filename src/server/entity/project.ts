@@ -93,8 +93,7 @@ export class RemoteProject extends DBEntity {
     super();
     this.path = "";
     this.name = "";
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
+    // @ts-expect-error must be null for relation to work
     this.project = null;
   }
 }
