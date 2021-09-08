@@ -86,16 +86,25 @@ const gitEnv = readGitEnv();
  * @returns a SimpleGit Instance
  */
 async function getGit(project: Project): Promise<SimpleGit> {
-  const git = simpleGit({
-    baseDir: project.path,
-  });
-  if (!git.checkIsRepo()) {
-    return git;
-  }
   const values = await gitEnv;
-  git.addConfig("user.email", values.mail);
-  git.addConfig("user.name", values.user);
-  return git;
+  const settings = await getManager().find(RemoteSetting);
+
+  const remoteConfig = [] as string[];
+
+  for (const setting of settings) {
+    if (!setting.projectId || setting.projectId === project.id) {
+      remoteConfig.push(
+        `user.https://${setting.host}.name=${setting.username}`,
+        `credential.https://${setting.host}.username=${setting.username}`,
+        `credential.https://${setting.host}.helper=!foo() { echo "password=${setting.token}"; }; foo`
+      );
+    }
+  }
+
+  return simpleGit({
+    baseDir: project.path,
+    config: ["user.email=" + values.mail, ...remoteConfig],
+  });
 }
 
 /**
