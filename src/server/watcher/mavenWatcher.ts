@@ -2,6 +2,7 @@ import { spawn } from "child_process";
 import { join } from "path";
 import { Dependency, Project, ProjectMeta } from "../entity/project";
 import { available, CheckOptions, Watcher } from "./watcher";
+import log from "npmlog";
 
 interface MavenProject {
   version: string;
@@ -246,13 +247,13 @@ export class MavenWatcher extends Watcher {
   }
 
   public async createCiFile(project: Project): Promise<void> {
-    console.log("Method not implemented.");
+    log.error("Maven", "Method 'createCiFile' not implemented.");
   }
   public async upgradeDeps(
     project: Project,
     dependencies: Dependency[]
   ): Promise<void> {
-    console.log("Method not implemented.");
+    log.error("Maven", "Method 'upgradeDeps' not implemented.");
   }
 
   private async checkPathValidity(project: Project): Promise<boolean> {

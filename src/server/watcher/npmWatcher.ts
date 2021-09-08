@@ -1,8 +1,8 @@
 import { spawn } from "child_process";
 import { readFile, writeFile } from "fs/promises";
-import { fstat } from "node:fs";
 import { join } from "path";
 import { compare } from "semver";
+import log from "npmlog";
 import { Dependency, Project, ProjectMeta } from "../entity/project";
 import { available, CheckOptions, Watcher } from "./watcher";
 
@@ -51,7 +51,7 @@ export class NodeWatcher extends Watcher {
   }
 
   public async createCiFile(project: Project): Promise<void> {
-    console.log("Method not implemented.");
+    log.error("NPM", "Method 'createCiFile' not implemented.");
   }
 
   public async upgradeDeps(

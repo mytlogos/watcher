@@ -1,7 +1,8 @@
 import { spawn } from "child_process";
 import { join } from "path";
 import { Dependency, Project, ProjectMeta } from "../entity/project";
-import { available, CheckOptions, Watcher } from "./watcher";
+import { CheckOptions, Watcher } from "./watcher";
+import log from "npmlog";
 
 interface PipDependency {
   name: string;
@@ -41,13 +42,13 @@ export class PythonWatcher extends Watcher {
   }
 
   public async createCiFile(project: Project): Promise<void> {
-    console.log("Method not implemented.");
+    log.error("Pip", "Method 'createCiFile' not implemented.");
   }
   public async upgradeDeps(
     project: Project,
     dependencies: Dependency[]
   ): Promise<void> {
-    console.log("Method not implemented.");
+    log.error("Pip", "Method 'upgradeDeps' not implemented.");
   }
 
   private async checkPathValidity(project: Project): Promise<boolean> {

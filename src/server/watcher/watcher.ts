@@ -4,6 +4,7 @@ import { checkout, commitAndPush, createPullRequest, isRepo } from "./git";
 import { compare } from "semver";
 import { homedir } from "os";
 import { join } from "path";
+import log from "npmlog";
 
 export async function available(path: string): Promise<boolean> {
   try {
@@ -64,9 +65,9 @@ export abstract class Watcher {
         );
       } catch (error) {
         if (error instanceof TypeError) {
-          console.error(error.message);
+          log.error(project.name, error.message);
         } else {
-          console.error(error);
+          log.error(project.name, String(error));
         }
         return false;
       }
@@ -77,8 +78,7 @@ export abstract class Watcher {
       await commitAndPush(dummyProject);
       await createPullRequest(dummyProject);
     } else {
-      console.log("No Updates available for " + project.name);
+      log.info(project.name, "No Updates available");
     }
-    return;
   }
 }

@@ -6,6 +6,13 @@ import {
 } from "typeorm";
 import { getWatcher } from "./watcher/watch";
 import { checkRemotes } from "./watcher/git";
+import log from "npmlog";
+Object.defineProperty(log, "heading", {
+  get: () => {
+    return new Date().toLocaleString();
+  },
+});
+log.headingStyle = { bg: "", fg: "grey" };
 
 let running = false;
 
@@ -21,19 +28,19 @@ async function watchProjects() {
     let checked = false;
 
     if (lastRun + runInterval < now) {
-      console.log("Checking project " + project.name);
+      log.info(project.name, "Checking project");
       const watcher = getWatcher(project.type);
       // const result = await watcher.check(project, {
       //   validityOnly: false,
       // });
       try {
-        console.log("Checking Remotes of " + project.name);
+        log.info(project.name, "Checking Remotes");
         await checkRemotes(project);
-        console.log("Upgrade Dependencies of " + project.name);
+        log.info(project.name, "Upgrade Dependencies");
         await watcher.upgrade(project);
-        console.log("Finished watch for " + project.name);
+        log.info(project.name, "Finished watch");
       } catch (error) {
-        console.error(project, error);
+        log.error(project.name, String(error));
       }
       // getManager().save(result);
       checked = true;
@@ -45,13 +52,9 @@ async function watchProjects() {
 
   for (const result of results) {
     if (result.status === "rejected") {
-      console.error(
-        `${finished}: A Project check failed with: ${result.reason}`
-      );
+      log.error("", `A Project check failed with: ${result.reason}`);
     } else {
-      console.log(
-        `${finished}: Project '${result.value[0]}' was checked: ${result.value[1]}`
-      );
+      log.info(result.value[0], `checked: ${result.value[1]}`);
     }
   }
 }

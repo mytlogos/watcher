@@ -1,9 +1,11 @@
 import { Project, RemoteProject } from "../entity/project";
-import simpleGit, { SimpleGit } from "simple-git";
+import { RemoteSetting } from "../entity/settings";
+import simpleGit, { GitError, SimpleGit } from "simple-git";
 import { getManager } from "typeorm";
 import fs from "fs/promises";
 import path from "path";
 import { Octokit } from "@octokit/core";
+import log from "npmlog";
 
 /**
  * Checks whether the path in the given string is accessible by this process.
@@ -129,7 +131,7 @@ export async function checkRemotes(project: Project): Promise<void> {
     const link = remote.refs.fetch;
 
     if (remote.refs.push !== link) {
-      console.log("Different Push and Fetch Links for Remote");
+      log.info(project.name, "Different Push and Fetch Links for Remote");
     }
     if (
       !currentRemotes.find(
@@ -165,6 +167,100 @@ export async function isRepo(project: Project): Promise<boolean> {
   return git.checkIsRepo();
 }
 
+interface ShowRemote {
+  name: string;
+  exists: boolean;
+  fetchUrl: string;
+  pushUrl: string;
+  headBranch: string;
+  remoteBranches: string[];
+  localPushBranches: string[];
+  localPullBranches: string[];
+}
+
+async function showRemote(git: SimpleGit, remote: string): Promise<ShowRemote> {
+  const fetchRegex = /Fetch\s+URL:\s+(\S+)/;
+  const pushRegex = /Push\s+URL:\s+(\S+)/;
+  const headRegex = /HEAD\s+branch:\s+(\S+)/;
+  const startRemotes = "Remote branches:";
+  const startPush = "Local refs configured for 'git push':";
+  const startPull = "Local branches configured for 'git pull':";
+
+  const regex = new Map<RegExp, { name: keyof ShowRemote; index: number }>();
+  regex.set(fetchRegex, { name: "fetchUrl", index: 1 });
+  regex.set(pushRegex, { name: "pushUrl", index: 1 });
+  regex.set(headRegex, { name: "headBranch", index: 1 });
+
+  const starts = new Map<string, keyof ShowRemote>();
+  starts.set(startRemotes, "remoteBranches");
+  starts.set(startPush, "localPushBranches");
+  starts.set(startPull, "localPullBranches");
+
+  const result = {
+    name: remote,
+    exists: false,
+    pushUrl: "",
+    fetchUrl: "",
+    headBranch: "",
+    localPullBranches: [],
+    localPushBranches: [],
+    remoteBranches: [],
+  } as ShowRemote;
+
+  const remotes = await git.getRemotes();
+
+  // return early if this remote name does exist as git remote
+  if (!remotes.find((value) => value.name === remote)) {
+    return result;
+  }
+
+  // this should not fail, as we are sure that the remote exists
+  const output = await git.remote(["show", remote]);
+
+  if (!output) {
+    throw Error("Expected Output for 'git remote show " + remote + "'");
+  }
+
+  result.exists = true;
+
+  let branchNames = undefined as undefined | string[];
+
+  for (const line of output.split("\n").map((s) => s.trim())) {
+    let found = false;
+    for (const [key, value] of regex.entries()) {
+      const match = key.exec(line);
+
+      if (match) {
+        // @ts-expect-error somehow does not match
+        result[value.name] = match[value.index];
+        found = true;
+        break;
+      }
+    }
+
+    if (found) {
+      continue;
+    }
+
+    for (const [key, value] of starts.entries()) {
+      if (line.includes(key)) {
+        branchNames = result[value] as string[];
+        found = true;
+        break;
+      }
+    }
+
+    if (!found && branchNames) {
+      const branchName = line.split(/\s/)[0];
+
+      if (branchName) {
+        branchNames.push(branchName);
+      }
+    }
+  }
+  return result;
+}
+
 /**
  * Checkout the Git repository of the Project to the given branch.
  * Creates the Branch locally if it does not exist.
@@ -191,98 +287,69 @@ export async function checkout(
   const branches = await git.branchLocal();
 
   if (branch in branches.branches) {
-    console.log("checking out to branch: ", branch);
+    log.info(project.name, "checking out to branch:", branch);
     await git.checkout(branch);
   } else {
-    console.log("checking out to new branch: ", branch);
+    log.info(project.name, "checking out to new branch:", branch);
     await git.checkout(["-b", branch]);
   }
-  // TODO: remotes should be configured by user etc.
-  // TODO: Do not create weird remotes, pull only if remote is configured (which it should always do?)
-  const remote = await createAuthenticatedRemote(git, project.remotes);
 
-  await git.remote(["show", remote?.name || ""]);
+  const remotes = await git.getRemotes();
 
-  if (remote) {
-    await git.push(["-u", remote.name, branch]);
+  for (const remote of remotes) {
+    try {
+      const result = await showRemote(git, remote.name);
+
+      if (!result.exists) {
+        throw Error(
+          "Remote should exist, as it was iterated from existing Remotes"
+        );
+      }
+
+      if (!result.remoteBranches.includes(branch)) {
+        await git.push(["-u", remote.name, branch]);
+        log.info(
+          project.name,
+          "Pushed Branch",
+          branch,
+          "to remote",
+          remote.name
+        );
+      }
+
+      await git.pull(remote.name, branch);
+      log.info(
+        project.name,
+        "pulled Branch",
+        branch,
+        "from remote",
+        remote.name
+      );
+    } catch (error) {
+      if (error instanceof GitError) {
+        if (error.message.includes("Unauthorized")) {
+          log.error(
+            project.name,
+            `Failed Branch ${branch} for Remote '${remote.name}': Unauthorized`
+          );
+        } else {
+          log.error(
+            project.name,
+            `Failed Branch ${branch} for Remote '${remote.name}': ${error}`
+          );
+        }
+      } else {
+        log.error(
+          project.name,
+          branch,
+          remote.name,
+          typeof error,
+          Object.keys(error as any),
+          error
+        );
+      }
+    }
   }
-  await git.pull();
-}
-
-const WATCHER_SUFFIX = "-watcher";
-
-/**
- * Get the name of a watcher remote.
- * This method should be removed, as watcher remotes should be removed.
- *
- * @param git configured SimpleGit Instance
- * @param remotes current remotes
- * @returns a remote name with the watcher-suffix
- */
-async function getRemote(
-  git: SimpleGit,
-  remotes?: RemoteProject[]
-): Promise<string | undefined> {
-  const remote = (remotes || [])[0];
-
-  if (!remote || remote.name.endsWith(WATCHER_SUFFIX)) {
-    return remote?.name;
-  }
-
-  const gitRemotes = await git.getRemotes(true);
-  const watcherRemoteName = remote.name + WATCHER_SUFFIX;
-
-  const watcherRemote = gitRemotes.find(
-    (value) => watcherRemoteName === value.name
-  );
-
-  return watcherRemote?.name;
-}
-
-/**
- * Get a RemoteProject with Authentication
- * embedded in it's URL or undefined if
- * it could not create such an object.
- * (Does not save it in database, only adding it to the git repository).
- * TODO: This method should be removed.
- *
- * @param git SimpleGit Instance
- * @param remotes available Remotes
- * @returns Authenticated RemoteProject or undefined
- */
-async function createAuthenticatedRemote(
-  git: SimpleGit,
-  remotes?: RemoteProject[]
-): Promise<RemoteProject | undefined> {
-  const remoteName = getRemote(git, remotes);
-
-  const remote = (remotes || [])[0];
-
-  if (!remote || remote.name.endsWith(WATCHER_SUFFIX)) {
-    return;
-  }
-
-  // for now only https authenticated remotes
-  const httpsProtocol = "https://";
-
-  if (!remote.path.startsWith(httpsProtocol)) {
-    return;
-  }
-
-  const gitValues = await gitEnv;
-
-  const authRemote = new RemoteProject();
-  authRemote.name = remote.name + WATCHER_SUFFIX;
-  authRemote.path =
-    httpsProtocol +
-    gitValues.user +
-    ":" +
-    gitValues.password +
-    "@" +
-    remote.path.slice(httpsProtocol.length);
-
-  await git.addRemote(authRemote.name, authRemote.path);
-  return authRemote;
 }
 
 /**
@@ -322,7 +389,7 @@ export async function commitAndPush(project: Project): Promise<void> {
   const result = await git.commit("chore: upgrade dependencies");
 
   if (result.summary.changes) {
-    console.log(`Committed ${result.summary.changes}`);
+    log.info(project.name, `Committed ${result.summary.changes}`);
     await git.push();
   }
 }
@@ -355,7 +422,7 @@ export async function createPullRequest(project: Project): Promise<void> {
     .find((value) => value);
 
   if (!repoName) {
-    console.log("No Repository Name for project: " + project.name);
+    log.info(project.name, "No Repository Name");
     return;
   }
 
@@ -367,7 +434,7 @@ export async function createPullRequest(project: Project): Promise<void> {
   );
 
   if (!base) {
-    console.warn("No default branch to base pull request on found");
+    log.info(project.name, "No default branch to base pull request on found");
     return;
   }
   const octokit = new Octokit({ auth: env.password });
@@ -376,12 +443,27 @@ export async function createPullRequest(project: Project): Promise<void> {
   const title = "Dependencies Update";
   const head = branches.current;
 
-  const response = await octokit.request(`POST /repos/{owner}/{repo}/pulls`, {
-    owner,
-    repo,
-    title,
-    head,
-    base,
-  });
-  console.log(response);
+  try {
+    const response = await octokit.request(`POST /repos/{owner}/{repo}/pulls`, {
+      owner,
+      repo,
+      title,
+      head,
+      base,
+    });
+    console.log(response);
+  } catch (error) {
+    if (error instanceof Error) {
+      if (error.message.includes(`No commits between ${base} and ${head}`)) {
+        log.error(
+          project.name,
+          `Could not create Pull Request - No commits between ${base} and ${head}`
+        );
+      } else {
+        log.error(project.name, error.message);
+      }
+    } else {
+      log.error(project.name, String(error));
+    }
+  }
 }
