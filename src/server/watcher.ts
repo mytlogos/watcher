@@ -23,7 +23,9 @@ async function watchProjects() {
   const now = Date.now();
   const runInterval = 1000 * 1; // run every hour
 
-  const promises = projects.map(async (project) => {
+  const promises = [] as Promise<[string, boolean]>[];
+
+  for (const project of projects) {
     const lastRun = project.meta?.lastRun?.getTime() || now;
     let checked = false;
 
@@ -45,10 +47,12 @@ async function watchProjects() {
       // getManager().save(result);
       checked = true;
     }
-    return [project.name, checked];
-  });
+    promises.push(Promise.resolve([project.name, checked]));
+  }
+  // const promises = projects.map(async (project) => {
+
+  // });
   const results = await Promise.allSettled(promises);
-  const finished = new Date().toLocaleString();
 
   for (const result of results) {
     if (result.status === "rejected") {
