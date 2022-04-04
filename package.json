@@ -37,7 +37,7 @@
     "vuex": "^4.0.2"
   },
   "devDependencies": {
-    "@types/bootstrap": "^5.1.4",
+    "@types/bootstrap": "^5.1.9",
     "@types/compression": "^1.7.2",
     "@types/debug": "^4.1.7",
     "@types/http-errors": "^1.8.1",
